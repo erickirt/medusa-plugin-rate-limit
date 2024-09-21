@@ -5,8 +5,18 @@ on:
     types: [created]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: oven/bun:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bun install
+      - run: bun test
+
   publish:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3

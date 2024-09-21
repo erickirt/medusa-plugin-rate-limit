@@ -22,7 +22,7 @@
 </h4>
 
 <p align="center">
-  A simple rate-limit plugin for Medusa.
+  A simple rate-limitting plugin for Medusa.
 </p>
 
 <h2>
@@ -189,6 +189,26 @@ export const config: MiddlewaresConfig = {
 	],
 }
 ```
+
+<h3> Default Middleware </h3>
+
+<p>We also provide a out of the box middleware that you can use immediately without needing to create your own. This middleware is exposed and can be used as follows:</p>
+
+```ts
+import { MiddlewaresConfig } from '@medusajs/medusa'
+import { rateLimitRoutes } from '@perseidesjs/medusa-plugin-rate-limit'
+
+export const config: MiddlewaresConfig = {
+	routes: [
+		{
+			// This will limit the number of requests to 5 per 60 seconds on the auth route using the default middleware
+			matcher: '/store/auth',
+			middlewares: [rateLimitRoutes],
+		},
+	],
+}
+```
+
 
 <h2> More information </h2>
 <p> You can find the <code>RateLimitService</code> class in the <a href="https://github.com/perseidesjs/medusa-plugin-rate-limit/blob/main/src/services/rate-limit.ts">src/services/rate-limit.ts</a> file.</p>

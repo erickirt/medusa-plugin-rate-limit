@@ -1,7 +1,7 @@
 import { TransactionBaseService } from '@medusajs/medusa'
-import type { Redis } from 'ioredis'
+import { type Redis } from 'ioredis'
 
-import type { PluginOptions } from '../types/options'
+import { type PluginOptions } from '../types/options'
 
 /**
  * Dependencies injected into the RateLimitService.
