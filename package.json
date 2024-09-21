@@ -8,6 +8,7 @@
   "files": [
     "dist"
   ],
+  "packageManager": "yarn@1.22.22",
   "repository": "https://github.com/perseidesjs/medusa-plugin-rate-limit.git",
   "keywords": [
     "medusa",
