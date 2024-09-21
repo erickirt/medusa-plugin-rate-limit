@@ -12,6 +12,7 @@
 </h1>
 
 <p align="center">
+  <img src="https://github.com/perseidesjs/medusa-plugin-rate-limit/actions/workflows/npm-publish.yml/badge.svg" alt="Tests">
   <img src="https://img.shields.io/npm/v/@perseidesjs/medusa-plugin-rate-limit" alt="npm version">
   <img src="https://img.shields.io/github/license/perseidesjs/medusa-plugin-rate-limit" alt="GitHub license">
 </p>
