@@ -5,6 +5,7 @@ node_modules
 /*.js
 !index.js
 yarn.lock
+bun.lockb
 eslint.config.mjs
 
 /dist
