@@ -22,7 +22,7 @@
 </h4>
 
 <p align="center">
-  A simple rate-limit plugin for Medusa.
+  A simple rate-limitting plugin for Medusa.
 </p>
 
 <h2>
