@@ -14,6 +14,7 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@perseidesjs/medusa-plugin-rate-limit" alt="npm version">
   <img src="https://github.com/perseidesjs/medusa-plugin-rate-limit/actions/workflows/npm-publish.yml/badge.svg" alt="Tests">
+  <img src="https://badgen.net/badge/dependencies/none/green" alt="No dependencies">
   <img src="https://img.shields.io/github/license/perseidesjs/medusa-plugin-rate-limit" alt="GitHub license">
 </p>
 
