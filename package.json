@@ -38,6 +38,7 @@
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
     "@types/supertest": "^6.0.2",
+    "ajv": "^8.17.1",
     "awilix": "^8.0.1",
     "cross-env": "^5.2.1",
     "eslint": "^9.12.0",
