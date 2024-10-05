@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "target": "es2019",
+    "target": "ES2021",
     "allowJs": true,
     "esModuleInterop": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "declaration": true,
-    "inlineSourceMap": true,
+    "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "jsx": "react-jsx",
@@ -18,12 +18,10 @@
     "resolveJsonModule": true,
     "checkJs": false
   },
-  "include": ["src/"],
+  "include": ["src", "__tests__"],
   "exclude": [
-    "**/__tests__",
-    "**/__fixtures__",
-    "node_modules",
+    "dist",
     "build",
-    ".cache"
+    "node_modules",
   ]
 }

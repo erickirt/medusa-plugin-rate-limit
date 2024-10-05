@@ -1,41 +1,47 @@
-import { type MedusaRequest, type MedusaResponse } from '@medusajs/medusa'
-import type { NextFunction } from 'express'
-import type RateLimitService from '../../services/rate-limit'
+import {
+	type MedusaNextFunction,
+	type MedusaRequest,
+	type MedusaResponse,
+} from '@medusajs/framework/http'
+import { type ICacheService } from '@medusajs/framework/types'
+import { Modules } from '@medusajs/framework/utils'
 
-/**
- * A simple rate limiter middleware based on the RateLimitService
- * @param limit {number} - Number of requests allowed per window
- * @param window  {number} - Number of seconds to wait before allowing requests again
- * @returns
- */
-export default async function defaultRateLimit(
-	req: MedusaRequest,
-	res: MedusaResponse,
-	next: NextFunction,
-) {
-	try {
-		const rateLimitService = req.scope.resolve<RateLimitService>('rateLimitService')
+import { type PluginOptions } from '../../constants'
+import { getExtendedPluginOptions } from '../../utils/get-extended-plugin-options'
+import { getIp } from '../../utils/get-ip'
+import { setRateLimitHeaders } from '../../utils/set-rate-limit-headers'
 
-		const key = req.ip
-		const rateLimitKey = `rate_limit:${key}`
-		const allowed = await rateLimitService.limit(rateLimitKey)
+export function defaultRateLimit(options: Partial<PluginOptions> | undefined) {
+	return async function (
+		req: MedusaRequest,
+		res: MedusaResponse,
+		next: MedusaNextFunction,
+	) {
+		const { limit, window, includeHeaders } = {
+			...getExtendedPluginOptions(req.scope),
+			...options,
+		}
 
-		if (!allowed) {
-			const retryAfter = await rateLimitService.ttl(rateLimitKey)
-			res.set('Retry-After', String(retryAfter))
-			res
-				.status(429)
-				.json({ error: 'Too many requests, please try again later.' })
+		const cacheModule = req.scope.resolve<ICacheService>(Modules.CACHE)
+
+		const ip = getIp(req)
+		const key = `rate-limit:${ip}`
+		const currentCount = (await cacheModule.get<number>(key)) || 0
+
+		if (currentCount >= limit) {
+			if (includeHeaders) {
+				setRateLimitHeaders(res, limit, 0)
+			}
+			res.status(429).send('Too many requests, please try again later.')
 			return
 		}
 
-		const remaining = await rateLimitService.getRemainingAttempts(rateLimitKey)
+		await cacheModule.set(key, currentCount + 1, window)
 
-		res.set('X-RateLimit-Limit', String(rateLimitService.getOptions().limit))
-		res.set('X-RateLimit-Remaining', String(remaining))
+		if (includeHeaders) {
+			setRateLimitHeaders(res, limit, limit - (currentCount + 1))
+		}
 
 		next()
-	} catch (error) {
-		next(error)
 	}
 }
