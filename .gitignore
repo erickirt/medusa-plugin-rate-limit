@@ -2,11 +2,9 @@
 node_modules
 .DS_store
 .env*
-/*.js
 !index.js
 yarn.lock
 bun.lockb
-eslint.config.mjs
 
 /dist
 
@@ -15,3 +13,5 @@ eslint.config.mjs
 /models
 /subscribers
 /__mocks__
+
+tsconfig.tsbuildinfo

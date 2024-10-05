@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://www.github.com/perseidesjs">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./.r/dark.png" width="128" height="128">
-    <source media="(prefers-color-scheme: light)" srcset="./.r/light.png" width="128" height="128">
-    <img alt="Perseides logo" src="./.r/light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="./.r/dark.png" width="64" height="64">
+    <source media="(prefers-color-scheme: light)" srcset="./.r/light.png" width="64" height="64">
+    <img alt="Perseides logo" src="./.r/light.png" width="64" height="64">
     </picture>
   </a>
 </p>
@@ -53,41 +53,66 @@ npm install @perseidesjs/medusa-plugin-rate-limit
   Usage
 </h2>
 <p>
-This plugin uses Redis under the hood, this plugin will also work in a development environment thanks to the fake Redis instance created by Medusa, remember to use Redis in production, by just passing the <code>redis_url</code> option to the <code>medusa-config.js > projectConfig</code> object.
+This plugin uses the <a href="https://docs.medusajs.com/v2/resources/architectural-modules/cache#main">CacheModule</a> available (<i>InMemory, Redis, etc.</i>) under the hood and exposes a simple middleware to limit the number of requests per IP address.
 </p>
 
-<h3>
-  Plugin configuration
-</h3>
+<h2>
+  How to use
+</h2>
 
 <p>
-You need to add the plugin to your Medusa configuration before you can use the rate limitting service. To do this, import the plugin as follows: 
+    If you want to start restricting certain routes, you can import the <code>defaultRateLimit</code> middleware from the plugin and then use it as follows:
 </p>
 
 ```ts
-const plugins = [
-	`medusa-fulfillment-manual`,
-	`medusa-payment-manual`,
-	`@perseidesjs/medusa-plugin-rate-limit`,
-]
+// src/api/middlewares.ts
+import { defineMiddlewares } from "@medusajs/medusa"
+import { defaultRateLimit } from '@perseidesjs/medusa-plugin-rate-limit'
+
+export default defineMiddlewares({
+  routes: [
+    {
+      matcher: "/store/custom*",
+      middlewares: [defaultRateLimit()],
+    },
+  ],
+})
 ```
 
-<p>You can also override the default configuration by passing an object to the plugin as follows: </p>
+<p>
+  You can also pass some custom options to have a complete control over the rate limiting mechanism as follows:
+</p>
 
 ```ts
-const plugins = [
-	`medusa-fulfillment-manual`,
-	`medusa-payment-manual`,
-	{
-		resolve: `@perseidesjs/medusa-plugin-rate-limit`,
-		/** @type {import('@perseidesjs/medusa-plugin-rate-limit').PluginOptions} */
-		options: {
-			limit: 5,
-			window: 60,
-		},
-	},
-]
+// src/api/middlewares.ts
+import { defineMiddlewares } from "@medusajs/medusa"
+import { defaultRateLimit } from '@perseidesjs/medusa-plugin-rate-limit'
+
+export default defineMiddlewares({
+  routes: [
+    {
+      matcher: "/store/custom*",
+      middlewares: [defaultRateLimit({
+				limit: 10,
+				window: 60,
+			})],
+    },
+  ],
+})
 ```
+<blockquote>
+ In this example, the rate limiting mechanism will allow 10 requests per minute per IP address.
+</blockquote>
+
+<h3>Granular control over rate limiting</h3>
+
+<p>
+  The choice of having options directly inside the middleware instead of globally inside the plugin options was made to provide greater flexibility. This approach allows users to be more or less restrictive on certain specific routes. By specifying options directly within the middleware, you can tailor the rate limiting mechanism to suit the needs of individual routes, rather than applying a one-size-fits-all configuration globally. This ensures that you can have fine-grained control over the rate limiting behavior, making it possible to adjust the limits based on the specific requirements of each route.
+</p>
+
+<p>
+  Additionally, you can still use the plugin options to update the default global values, such as the limit and window. This allows you to set your own default values that will be applied across many routes, while still having the flexibility to specify more granular settings for specific routes. By configuring the plugin options, you can establish a baseline rate limiting policy that suits the majority of your application, and then override these defaults as needed for particular routes.
+</p>
 
 <h3> Default configuration </h3>
 
@@ -116,104 +141,37 @@ const plugins = [
   </tbody>
 </table>
 
-<h2>
-  How to use
-</h2>
 
-<p>
-    If you want to start restricting certain routes, you can resolve the <code>RateLimitService</code> from the Medusa container, and then create middleware as shown below :
-</p>
+<h3> Plugin options </h3>
 
 ```ts
-// src/middlewares/rate-limit.ts
+// medusa-config.js
+const { loadEnv, defineConfig } = require('@medusajs/framework/utils')
 
-import { type MedusaRequest, type MedusaResponse } from '@medusajs/medusa'
-import type { NextFunction } from 'express'
-import type { RateLimitService } from '@perseidesjs/medusa-plugin-rate-limit'
+loadEnv(process.env.NODE_ENV, process.cwd())
 
-/**
- * A simple rate limiter middleware based on the RateLimitService
- * @param limit {number} - Number of requests allowed per window
- * @param window  {number} - Number of seconds to wait before allowing requests again
- * @returns
- */
-export default async function rateLimit(
-	req: MedusaRequest,
-	res: MedusaResponse,
-	next: NextFunction,
-) {
-	try {
-    // 1️⃣ We resolve the RateLimitService from the container
-		const rateLimitService = req.scope.resolve<RateLimitService>('rateLimitService')
-
-
-    // 2️⃣ We create a key for the current request based on the IP address for example
-		const key = req.ip 
-		const rateLimitKey = `rate_limit:${key}`
-		const allowed = await rateLimitService.limit(rateLimitKey)
-
-    // 3️⃣ If the request is not allowed, we return a 429 status code and a JSON response with an error message
-		if (!allowed) {
-			const retryAfter = await rateLimitService.ttl(rateLimitKey)
-			res.set('Retry-After', String(retryAfter))
-			res
-				.status(429)
-				.json({ error: 'Too many requests, please try again later.' })
-			return
-		}
-
-    // 4️⃣ Otherwise, we can continue, below I'm getting the remaining attempts for the current key for example
-		const remaining = await rateLimitService.getRemainingAttempts(rateLimitKey)
-
-		res.set('X-RateLimit-Limit', String(rateLimitService.getOptions().limit))
-		res.set('X-RateLimit-Remaining', String(remaining))
-
-		next()
-	} catch (error) {
-		next(error)
-	}
-}
+module.exports = defineConfig({
+  projectConfig: {
+    databaseUrl: process.env.DATABASE_URL,
+    http: {
+      storeCors: process.env.STORE_CORS,
+      adminCors: process.env.ADMIN_CORS,
+      authCors: process.env.AUTH_CORS,
+      jwtSecret: process.env.JWT_SECRET || "supersecret",
+      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+    },
+  },
+  plugins: [
+    {
+      resolve: "@perseidesjs/medusa-plugin-rate-limit",
+      options: {
+        limit: 50,
+        window: 60,
+      },
+    },
+  ],
+})
 ```
-
-<p>And then use it in your <code>src/api/middlewares.ts</code> file as follows:</p>
-
-```ts
-import { MiddlewaresConfig } from '@medusajs/medusa'
-import rateLimit from './middlewares/rate-limit'
-
-export const config: MiddlewaresConfig = {
-	routes: [
-		{
-			// This will limit the number of requests to 5 per 60 seconds on the auth route
-			matcher: '/store/auth',
-			middlewares: [rateLimit],
-		},
-	],
-}
-```
-
-<h3> Default Middleware </h3>
-
-<p>We also provide a out of the box middleware that you can use immediately without needing to create your own. This middleware is exposed and can be used as follows:</p>
-
-```ts
-import { MiddlewaresConfig } from '@medusajs/medusa'
-import { rateLimitRoutes } from '@perseidesjs/medusa-plugin-rate-limit'
-
-export const config: MiddlewaresConfig = {
-	routes: [
-		{
-			// This will limit the number of requests to 5 per 60 seconds on the auth route using the default middleware
-			matcher: '/store/auth',
-			middlewares: [rateLimitRoutes],
-		},
-	],
-}
-```
-
-
-<h2> More information </h2>
-<p> You can find the <code>RateLimitService</code> class in the <a href="https://github.com/perseidesjs/medusa-plugin-rate-limit/blob/main/src/services/rate-limit.ts">src/services/rate-limit.ts</a> file.</p>
 
 <h2>License</h2>
 <p> This project is licensed under the MIT License - see the <a href="./LICENSE.md">LICENSE</a> file for details</p>
