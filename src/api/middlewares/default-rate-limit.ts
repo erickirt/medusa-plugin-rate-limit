@@ -7,18 +7,18 @@ import { type ICacheService } from '@medusajs/framework/types'
 import { Modules } from '@medusajs/framework/utils'
 
 import { type PluginOptions } from '../../constants'
-import { getExtendedPluginOptions } from '../../utils/get-extended-plugin-options'
+import { getDefaultOptions } from '../../utils/get-default-options'
 import { getIp } from '../../utils/get-ip'
 import { setRateLimitHeaders } from '../../utils/set-rate-limit-headers'
 
-export function defaultRateLimit(options: Partial<PluginOptions> | undefined) {
+export function defaultRateLimit(options: Partial<PluginOptions> = {}) {
 	return async function (
 		req: MedusaRequest,
 		res: MedusaResponse,
 		next: MedusaNextFunction,
 	) {
 		const { limit, window, includeHeaders } = {
-			...getExtendedPluginOptions(req.scope),
+			...getDefaultOptions(),
 			...options,
 		}
 
