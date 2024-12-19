@@ -1,7 +1,7 @@
 {
   "name": "@perseidesjs/medusa-plugin-rate-limit",
-  "version": "2.0.0-0",
-  "description": "A simple rate-limit service for Medusa",
+  "version": "2.0.0",
+  "description": "A simple rate-limit middleware for Medusa",
   "author": "adevinwild",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@epic-web/config": "^1.12.0",
-    "@medusajs/framework": "rc",
+    "@medusajs/framework": "^2.1.2",
     "@mikro-orm/core": "5.9.7",
     "@mikro-orm/migrations": "5.9.7",
     "@mikro-orm/postgresql": "5.9.7",
@@ -50,6 +50,6 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "@medusajs/framework": "rc"
+    "@medusajs/framework": "^2.1.2"
   }
 }
