@@ -24,14 +24,14 @@
 </h4>
 
 <p align="center">
-  A simple rate-limitting plugin for Medusa.
+  A simple rate-limitting utility for Medusa.
 </p>
 
 <h2>
  Purpose
 </h2>
 
-<p>This plugin was mainly built to protect your MedusaJS application from abuse. This plugin allows you to easily manage request limits without stepping outside the familiar Medusa environment.</p>
+<p>This utility middleware was mainly built to protect your MedusaJS application from abuse. It allows you to easily manage request limits without stepping outside the familiar Medusa environment.</p>
 
 <h3>Why Rate Limiting Matters</h3>
 
@@ -53,7 +53,7 @@ npm install @perseidesjs/medusa-plugin-rate-limit
   Usage
 </h2>
 <p>
-This plugin uses the <a href="https://docs.medusajs.com/v2/resources/architectural-modules/cache#main">CacheModule</a> available (<i>InMemory, Redis, etc.</i>) under the hood and exposes a simple middleware to limit the number of requests per IP address.
+This middleware uses the <a href="https://docs.medusajs.com/resources/architectural-modules/cache#main">CacheModule</a> available (<i>InMemory, Redis, etc.</i>) under the hood and exposes a simple middleware to limit the number of requests per IP address.
 </p>
 
 <h2>
@@ -107,11 +107,11 @@ export default defineMiddlewares({
 <h3>Granular control over rate limiting</h3>
 
 <p>
-  The choice of having options directly inside the middleware instead of globally inside the plugin options was made to provide greater flexibility. This approach allows users to be more or less restrictive on certain specific routes. By specifying options directly within the middleware, you can tailor the rate limiting mechanism to suit the needs of individual routes, rather than applying a one-size-fits-all configuration globally. This ensures that you can have fine-grained control over the rate limiting behavior, making it possible to adjust the limits based on the specific requirements of each route.
+  The choice of having options directly inside the middleware instead of globally inside the global options (as on version 1.x of the project) was made to provide greater flexibility. This approach allows users to be more or less restrictive on certain specific routes. By specifying options directly within the middleware, you can tailor the rate limiting mechanism to suit the needs of individual routes, rather than applying a one-size-fits-all configuration globally. This ensures that you can have fine-grained control over the rate limiting behavior, making it possible to adjust the limits based on the specific requirements of each route.
 </p>
 
 <p>
-  Additionally, you can still use the plugin options to update the default global values, such as the limit and window. This allows you to set your own default values that will be applied across many routes, while still having the flexibility to specify more granular settings for specific routes. By configuring the plugin options, you can establish a baseline rate limiting policy that suits the majority of your application, and then override these defaults as needed for particular routes.
+  Additionally, you can use a exported function called `configureDefaults` to update the default global values, such as the `limit`, `window` and `includeHeaders`. This allows you to set your own default values that will be applied across many routes, while still having the flexibility to specify more granular settings for specific routes. By configuring the middleware options, you can establish a baseline rate limiting policy that suits the majority of your application, and then override these defaults as needed for particular routes.
 </p>
 
 <h3> Default configuration </h3>
@@ -138,36 +138,53 @@ export default defineMiddlewares({
       <td><code>60</code></td>
       <td>The time window in seconds</td>   
     </tr>
+    <tr>
+      <td>includeHeaders</td>
+      <td><code>Boolean</code></td>
+      <td><code>false</code></td>
+      <td>Whether to include the headers (<code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>) in the response</td>
+    </tr>
   </tbody>
 </table>
 
 
-<h3> Plugin options </h3>
+<h3>Overriding default options</h3>
 
 ```ts
-// medusa-config.js
-const { loadEnv, defineConfig } = require('@medusajs/framework/utils')
+// 
 
-loadEnv(process.env.NODE_ENV, process.cwd())
+import {
+  defineMiddlewares
+} from "@medusajs/framework/http"
+import { defaultRateLimit, configureDefaults } from '@perseidesjs/medusa-plugin-rate-limit'
 
-module.exports = defineConfig({
-  projectConfig: {
-    databaseUrl: process.env.DATABASE_URL,
-    http: {
-      storeCors: process.env.STORE_CORS,
-      adminCors: process.env.ADMIN_CORS,
-      authCors: process.env.AUTH_CORS,
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-    },
-  },
-  plugins: [
+// This will override the global default options for all routes
+// Here, we set the limit to 1 request per 30 seconds
+configureDefaults({
+  limit: 1,
+  window: 30,
+})
+
+export default defineMiddlewares({
+  routes: [
     {
-      resolve: "@perseidesjs/medusa-plugin-rate-limit",
-      options: {
-        limit: 50,
-        window: 60,
-      },
+      matcher: "/store/custom*",
+      method: "POST",
+      middlewares: [
+        // Uses the global default options
+        defaultRateLimit()
+      ],
+    },
+        {
+      matcher: "/store/custom*",
+      method: "POST",
+      middlewares: [
+        // If the options are provided, they will ignore the global default options and use the provided ones
+        defaultRateLimit({
+          limit: 10,
+          window: 60,
+        })
+      ],
     },
   ],
 })

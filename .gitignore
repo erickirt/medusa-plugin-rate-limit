@@ -15,3 +15,4 @@ bun.lockb
 /__mocks__
 
 tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
