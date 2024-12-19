@@ -24,6 +24,7 @@
   "scripts": {
     "test": "jest --silent --runInBand --forceExit",
     "build": "rimraf dist && tsc --build ./tsconfig.json",
+    "build:publish": "rimraf dist && tsc --build ./tsconfig.build.json",
     "watch": "tsc --watch",
     "prettier:fix": "prettier --write \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\""
