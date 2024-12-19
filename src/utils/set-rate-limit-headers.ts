@@ -5,6 +5,6 @@ export function setRateLimitHeaders(
 	limit: number,
 	remaining: number,
 ) {
-	res.setHeader('X-RateLimit-Limit', limit)
-	res.setHeader('X-RateLimit-Remaining', remaining)
+	res.setHeader('X-RateLimit-Limit', String(limit))
+	res.setHeader('X-RateLimit-Remaining', String(remaining))
 }
